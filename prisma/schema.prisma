@@ -1,88 +1,118 @@
 datasource db {
-  provider = "mysql"
-  url      = env("DATABASE_URL")
+    provider = "mysql"
+    url      = env("DATABASE_URL")
 }
 
 generator client {
-  provider = "prisma-client-js"
+    provider = "prisma-client-js"
 }
 
 model User {
-  id       Int    @id @unique @default(autoincrement())
-  name     String
-  email    String @unique
-  pets     Pet[]
-  salt     String @unique @default(uuid())
-  password String
+    id              Int               @id @unique @default(autoincrement())
+    name            String
+    email           String            @unique
+    pets            Pet[]
+    salt            String            @unique @default(uuid())
+    password        String
+    AdoptionRequest AdoptionRequest[]
 
-  @@map("users")
+    @@map("users")
 }
 
 model Pet {
-  id        Int      @id @unique @default(autoincrement())
-  name      String
-  dob       DateTime
-  type      PetType
-  breed     String?
-  subbreed  String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+    id              Int               @id @unique @default(autoincrement())
+    name            String
+    dob             DateTime
+    type            PetType
+    breed           String?
+    subbreed        String?
+    createdAt       DateTime          @default(now())
+    updatedAt       DateTime          @updatedAt
+    // Relations
+    ownerId         Int
+    owner           User              @relation(fields: [ownerId], references: [id])
+    pictures        Picture[]
+    DogDetails      DogDetails?
+    CatDetails      CatDetails?
+    BirdDetails     BirdDetails?
+    AdoptionRequest AdoptionRequest[]
 
-  // Relations
-  ownerId     Int
-  owner       User         @relation(fields: [ownerId], references: [id])
-  DogDetails  DogDetails?
-  CatDetails  CatDetails?
-  BirdDetails BirdDetails?
-
-  // Enum Type
-  @@map("pets")
+    // Enum Type
+    @@map("pets")
 }
 
 model DogDetails {
-  id      Int     @id @unique @default(autoincrement())
-  petId   Int     @unique
-  size    DogSize
-  trained Boolean @default(false)
+    id      Int     @id @unique @default(autoincrement())
+    petId   Int     @unique
+    size    DogSize
+    trained Boolean @default(false)
+    // Relations
+    pet     Pet     @relation(fields: [petId], references: [id])
 
-  // Relations
-  pet Pet @relation(fields: [petId], references: [id])
-
-  @@map("dog_details")
+    @@map("dog_details")
 }
 
 model CatDetails {
-  id       Int     @id @unique @default(autoincrement())
-  petId    Int     @unique
-  indoor   Boolean @default(true)
-  declawed Boolean @default(false)
+    id       Int     @id @unique @default(autoincrement())
+    petId    Int     @unique
+    indoor   Boolean @default(true)
+    declawed Boolean @default(false)
+    // Relations
+    pet      Pet     @relation(fields: [petId], references: [id])
 
-  // Relations
-  pet Pet @relation(fields: [petId], references: [id])
-
-  @@map("cat_details")
+    @@map("cat_details")
 }
 
 model BirdDetails {
-  id       Int     @id @unique @default(autoincrement())
-  petId    Int     @unique
-  wingspan Float?
-  talking  Boolean @default(false)
+    id       Int     @id @unique @default(autoincrement())
+    petId    Int     @unique
+    wingspan Float?
+    talking  Boolean @default(false)
+    // Relations
+    pet      Pet     @relation(fields: [petId], references: [id])
 
-  // Relations
-  pet Pet @relation(fields: [petId], references: [id])
-
-  @@map("bird_details")
+    @@map("bird_details")
 }
 
 enum PetType {
-  DOG
-  CAT
-  BIRD
+    DOG
+    CAT
+    BIRD
 }
 
 enum DogSize {
-  SMALL
-  MEDIUM
-  LARGE
+    SMALL
+    MEDIUM
+    LARGE
+}
+
+model AdoptionRequest {
+    id           Int           @id @unique @default(autoincrement())
+    requester    User          @relation(fields: [requesterId], references: [id])
+    requesterId  Int
+    pet          Pet           @relation(fields: [petId], references: [id])
+    petId        Int
+    requestDate  DateTime      @default(now())
+    description  String?
+    hasOtherPets Boolean
+    pictures     Picture[]
+    status       RequestStatus @default(PENDING)
+
+    @@map("adoption_requests")
+}
+
+model Picture {
+    id                Int             @id @unique @default(autoincrement())
+    url               String
+    adoptionRequestId Int
+    adoptionRequest   AdoptionRequest @relation(fields: [adoptionRequestId], references: [id])
+    Pet               Pet[]
+
+    @@map("pictures")
+}
+
+enum RequestStatus {
+    PENDING
+    APPROVED
+    REJECTED
 }
